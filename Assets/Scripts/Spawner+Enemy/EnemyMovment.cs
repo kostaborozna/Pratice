@@ -1,43 +1,60 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class EnemyMovment : MonoBehaviour
 {
+    public float startSpeed = 10f;
+
+    [HideInInspector]
     public float speed = 10f;
 
-    public int health = 100;
+    public int startHealth = 100;
+    private float health;
 
     public int value = 50;
+    private bool isDead = false;
 
     public GameObject deathEffect;
     private Transform target;
 
+    public Image healthBar;
     private int wavepointIndex = 0;
 
     void Start()
     {
+        speed = startSpeed;
         target = WayPoints.points[0];
+        health = startHealth;
     }
 
     public void TakeDamage(int amount)
     {
         health -= amount;
-
-        if(health <= 0)
+        healthBar.fillAmount = health / startHealth;
+        if(health <= 0 && !isDead)
         {
             Die();
         }
     }
 
+    public void Slow(float pct)
+    {
+        speed = startSpeed * (1f - pct);
+    }
+
     void Die()
     {
+        PlayerStats.moneyCount += PlayerStats.Money;
+        PlayerStats.kils++;
+        PlayerStats.Money += value;
         GameObject effect = (GameObject) Instantiate(deathEffect, transform.position, Quaternion.identity);
         Destroy(effect, 5f);
-        PlayerStats.Money += value;
+        WaveSpawner.EnemiesAlive--;
         Destroy(gameObject);
+        
     }
+
+
     private void Update()
     {
         Vector3 dir = target.position - transform.position;
@@ -63,7 +80,9 @@ public class EnemyMovment : MonoBehaviour
 
         void EndPath()
         {
+            PlayerStats.gamesCount++;
             PlayerStats.Lives--;
+            WaveSpawner.EnemiesAlive--;
             Destroy(gameObject);
             
         }
